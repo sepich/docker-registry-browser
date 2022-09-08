@@ -17,19 +17,22 @@ EXPOSE $SSL_PORT
 
 WORKDIR /app
 
-ADD . .
+ADD Gemfile* ./
 
 RUN apk update \
  && apk add build-base zlib-dev tzdata nodejs openssl-dev shared-mime-info libc6-compat \
  && rm -rf /var/cache/apk/* \
- && gem install bundler -v $(tail -n1 Gemfile.lock | xargs) \
- && bundle config set build.sassc '--disable-march-tune-native' \
- && bundle config set without 'development test' \
- && bundle install \
- && bundle exec rails assets:precompile \
- && addgroup -S app && adduser -S app -G app -h /app \
- && chown -R app.app /app \
- && chown -R app.app /usr/local/bundle
+ && gem install bundler -v $(tail -n1 Gemfile.lock | xargs)
+
+# reset cache
+ADD . .
+RUN  bundle config set build.sassc '--disable-march-tune-native' \
+     && bundle config set without 'development test' \
+     && bundle install \
+     && bundle exec rails assets:precompile \
+     && addgroup -S app && adduser -S app -G app -h /app \
+     && chown -R app.app /app \
+     && chown -R app.app /usr/local/bundle
 
 USER app
 
